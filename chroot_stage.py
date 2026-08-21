@@ -3,10 +3,6 @@ import os
 import subprocess
 import sys
 
-if os.geteuid() != 0:
-    print("Ошибка: Запустите скрипт через sudo")
-    sys.exit(1)
-
 
 if len(sys.argv) >= 3:
     selected_mirror = sys.argv[1]
