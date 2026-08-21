@@ -2,6 +2,8 @@ import os
 import subprocess
 import sys
 
+subprocess.run(["rm", "-rf", "/etc/portage/make.conf"], check=True)
+
 # 1. Прием аргументов от основного скрипта
 if len(sys.argv) >= 3:
     selected_mirror = sys.argv[1]
