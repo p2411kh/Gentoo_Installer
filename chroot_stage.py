@@ -1,8 +1,8 @@
 import os
 import subprocess
 import sys
+import shutil
 
-subprocess.run(["rm", "-rf", "/etc/portage/make.conf"], check=True)
 
 # 1. Прием аргументов от основного скрипта
 if len(sys.argv) >= 3:
@@ -19,12 +19,18 @@ makeopts_value = f"-j{half_threads} -l{half_threads}"
 
 common_flags = "-O2 -pipe -march=native"
 
-# 3. Запись конфигурации Portage (10-region.conf)
-make_conf_dir = "/etc/portage/make.conf"
-os.makedirs(make_conf_dir, exist_ok=True)
-mirrors_conf_path = os.path.join(make_conf_dir, "10-region.conf")
+# 3. Гарантированное создание структуры директорий Portage
+portage_dir = "/etc/portage"
+os.makedirs(portage_dir, exist_ok=True)
 
-mirrors_config_content = f"""# Настройки оптимизации и процессора
+make_conf_path = os.path.join(portage_dir, "make.conf")
+if os.path.exists(make_conf_path):
+    if os.path.isdir(make_conf_path):
+        shutil.rmtree(make_conf_path)
+    else:
+        os.remove(make_conf_path)
+
+make_config_content = f"""# Настройки оптимизации и процессора
 COMMON_FLAGS="{common_flags}"
 CFLAGS="${{COMMON_FLAGS}}"
 CXXFLAGS="${{COMMON_FLAGS}}"
@@ -39,10 +45,10 @@ MAKEOPTS="{makeopts_value}"
 ACCEPT_LICENSE="*"
 """
 
-with open(mirrors_conf_path, "w", encoding="utf-8") as f:
-    f.write(mirrors_config_content)
+with open(make_conf_path, "w", encoding="utf-8") as f:
+    f.write(make_config_content)
 
-print("[+] Файл 10-region.conf с -march=native и MAKEOPTS создана.")
+print("[+] Файл /etc/portage/make.conf успешно сформирован.")
 
 # 4. Настройка USE-флага dracut для installkernel
 package_use_dir = "/etc/portage/package.use"
@@ -52,20 +58,22 @@ installkernel_use_path = os.path.join(package_use_dir, "installkernel")
 with open(installkernel_use_path, "w", encoding="utf-8") as f:
     f.write("sys-kernel/installkernel dracut\n")
 
-print("[+] Записан USE-флаг: sys-kernel/installkernel dracut")
-
-# 5. Синхронизация Portage
-print("[+] Загрузка дерева пакетов Portage...")
+print("[+] Синхронизация Portage...")
 subprocess.run(["emerge-webrsync"], check=True)
 
-# 6. Установка пакетов ядра
-print("[+] Установка linux-firmware...")
+print("[+] Установка ядра и системных утилит...")
 subprocess.run(["emerge", "--noreplace", "sys-kernel/linux-firmware"], check=True)
-
-print("[+] Установка installkernel...")
 subprocess.run(["emerge", "--noreplace", "sys-kernel/installkernel"], check=True)
-
-print("[+] Сборка и установка gentoo-kernel (это может занять время)...")
 subprocess.run(["emerge", "--noreplace", "sys-kernel/gentoo-kernel"], check=True)
+subprocess.run(["emerge", "--noreplace", "net-misc/dhcpcd", "sys-boot/grub", "sys-boot/efibootmgr"], check=True)
 
-print("\n[✔] Ядро скомпилировано, initramfs сгенерирован через dracut!")
+print("[+] Включение dhcpcd в автозагрузку...")
+subprocess.run(["rc-update", "add", "dhcpcd", "default"], check=True)
+
+print("[+] Установка и настройка GRUB...")
+subprocess.run(["grub-install", "--target=x86_64-efi", "--efi-directory=/boot", "--bootloader-id=gentoo"], check=True)
+
+os.makedirs("/boot/grub", exist_ok=True)
+subprocess.run(["grub-mkconfig", "-o", "/boot/grub/grub.cfg"], check=True)
+
+print("\n[✔] Скрипт chroot_stage завершил работу.")
