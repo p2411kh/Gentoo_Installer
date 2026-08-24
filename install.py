@@ -96,10 +96,10 @@ for cmd in mount_commands:
 
 # 5. Подготовка к chroot и передача выбранных параметров
 shutil.copy("/etc/resolv.conf", "/mnt/gentoo/etc/resolv.conf")
-shutil.copy("chroot_stage.py", "/mnt/gentoo/tmp/chroot_stage.py")
+shutil.copy("chroot_stage.py", "/mnt/gentoo/chroot_stage.py")
 
 subprocess.run([
     "chroot", "/mnt/gentoo", 
-    "python3", "/tmp/chroot_stage.py", 
+    "python3", "/chroot_stage.py", 
     selected_mirror, selected_linguas
 ], check=True)
