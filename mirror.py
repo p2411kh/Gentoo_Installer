@@ -2,12 +2,11 @@
 
 # Список зеркал по странам
 GENTOO_MIRRORS_DB = {
-    "1": {"name": "Австрия (Austria)", "url": "https://easyname.at"},
-    "2": {"name": "Россия (Russia)", "url": "http://yandex.ru"},
-    "3": {"name": "США (USA)", "url": "https://rit.edu"}
+    "1": {"name": "Австрия (Austria)", "url": "https://mirror.easyname.at/gentoo/"},
+    "2": {"name": "Россия (Yandex)", "url": "http://mirror.yandex.ru/gentoo-distfiles/"},
+    "3": {"name": "США (RIT)", "url": "https://mirrors.rit.edu/gentoo/"}
 }
 
-# Список локалей (языков системы)
 LOCALES_DB = {
     "1": {"name": "Русский (ru)", "linguas": "ru en"},
     "2": {"name": "Немецкий (de)", "linguas": "de en"},
