@@ -40,11 +40,19 @@ def get_latest_stage3_url():
     try:
         with urllib.request.urlopen(txt_url) as response:
             content = response.read().decode('utf-8')
+            # Файл теперь PGP-clearsigned (начинается с "-----BEGIN PGP SIGNED MESSAGE-----"
+            # и заканчивается блоком подписи), поэтому нельзя просто пропускать строки
+            # с "#" — нужно искать именно строку вида "<timestamp>/<файл>.tar.xz <размер>".
             for line in content.splitlines():
-                if line.startswith("#") or not line.strip():
+                line = line.strip()
+                if not line or line.startswith("#") or line.startswith("-----"):
                     continue
-                rel_path = line.split()[0]
-                return base_url + rel_path
+                parts = line.split()
+                rel_path = parts[0]
+                if rel_path.endswith(".tar.xz") or rel_path.endswith(".tar.bz2"):
+                    return base_url + rel_path
+        print("[!] Ошибка: в latest-*.txt не найдена строка с именем архива stage3.")
+        sys.exit(1)
     except Exception as e:
         print(f"[!] Ошибка при получении актуального Stage3: {e}")
         sys.exit(1)
